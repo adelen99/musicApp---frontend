@@ -7,6 +7,8 @@ const ArtistList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedArtist, setSelectedArtist] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => {
     fetchData();
@@ -19,7 +21,7 @@ const ArtistList = () => {
       );
       setArtists(result.data);
       setLoading(false);
-      setError(null); 
+      setError(null);
     } catch (error) {
       console.error("Error fetching artists:", error);
       setError(error);
@@ -40,12 +42,51 @@ const ArtistList = () => {
 
   const handleReset = () => {
     setSelectedArtist(null);
+    setSearchTerm("");
     fetchData();
+  };
+
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+    setSearchTerm(value);
+
+    // Filter artists based on search term
+    const filteredArtists = artists.filter((artist) =>
+      artist.name.toLowerCase().includes(value.toLowerCase())
+    );
+
+    setSuggestions(filteredArtists);
+  };
+
+  const handleSelectArtist = (artistId) => {
+    setSearchTerm("");
+    handleArtistClick(artistId);
   };
 
   return (
     <div className='max-w-2xl mx-auto p-4'>
       {!selectedArtist && <h1 className='text-3xl font-bold mb-4'>Artists</h1>}
+      <div className='relative'>
+        <input
+          type='text'
+          className='w-full border border-gray-300 rounded-md py-2  px-3 focus:outline-none focus:ring-2 focus:ring-gray-200'
+          placeholder='Search artists...'
+          value={searchTerm}
+          onChange={handleSearchChange}
+        />
+        {searchTerm && suggestions.length > 0 && (
+          <ul className='absolute z-10  w-full bg-white border border-gray-300 rounded-md mt-1 py-1 text-sm'>
+            {suggestions.map((artist) => (
+              <li
+                key={artist._id}
+                className='px-3 py-1 cursor-pointer hover:bg-gray-100'
+                onClick={() => handleSelectArtist(artist._id)}>
+                {artist.name}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       {loading ? (
         <p className='text-gray-600'>Loading...</p>
       ) : error ? (
@@ -53,7 +94,7 @@ const ArtistList = () => {
       ) : (
         <>
           {selectedArtist ? (
-            <div className='border-b-2 pb-4 mb-4 text-center'>
+            <div className='border-b-2 p-4 mb-4 text-center'>
               <h2 className='text-2xl font-bold mb-2 bg-gray-300 rounded-xl py-2 px-4 inline-block'>
                 Artist: {selectedArtist.name}
               </h2>
